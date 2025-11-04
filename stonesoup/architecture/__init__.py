@@ -1,13 +1,14 @@
 from abc import abstractmethod
+from collections.abc import Collection, Sequence
 from datetime import datetime, timedelta
 from operator import attrgetter
-from typing import List, Tuple, Collection, Set, Union, Dict
-from ordered_set import OrderedSet
+from typing import Union
 
 import graphviz
 import numpy as np
 import networkx as nx
 import pydot
+from ordered_set import OrderedSet
 
 from .edge import Edges, DataPiece, Edge
 from .node import Node, SensorNode, RepeaterNode, FusionNode
@@ -26,7 +27,7 @@ class Architecture(Base):
         doc="An Edges object containing all edges. For A to be connected to B we would have an "
             "Edge with edge_pair=(A, B) in this object.")
     current_time: datetime = Property(
-        default=None,
+        default_factory=datetime.now,
         doc="The time which the instance is at for the purpose of simulation. "
             "This is increased by the propagate method. This should be set to the earliest "
             "timestep from the ground truth")
@@ -50,8 +51,6 @@ class Architecture(Base):
         super().__init__(*args, **kwargs)
         if not self.name:
             self.name = type(self).__name__
-        if not self.current_time:
-            self.current_time = datetime.now()
 
         self.di_graph = nx.to_networkx_graph(self.edges.edge_list, create_using=nx.DiGraph)
         self._viz_graph = None
@@ -285,7 +284,7 @@ class Architecture(Base):
             node_kwargs['width'] = node.node_dim[0]
             node_kwargs['height'] = node.node_dim[1]
         if use_position and node.position:
-            if not isinstance(node.position, Tuple):
+            if not isinstance(node.position, Sequence):
                 raise TypeError("Node position, must be Sequence of length 2")
             node_kwargs["pos"] = f"{node.position[0]},{node.position[1]}!"
         return node_kwargs
@@ -487,8 +486,8 @@ class Architecture(Base):
 
         return True
 
-    def measure(self, ground_truths: List[GroundTruthPath], noise: Union[bool, np.ndarray] = True,
-                **kwargs) -> Dict[SensorNode, Set[Union[TrueDetection, Clutter]]]:
+    def measure(self, ground_truths: list[GroundTruthPath], noise: Union[bool, np.ndarray] = True,
+                **kwargs) -> dict[SensorNode, set[Union[TrueDetection, Clutter]]]:
         """
         Similar to the method for :class:`~.SensorSuite`. Updates each node.
 

@@ -2,7 +2,6 @@ import copy
 import threading
 from datetime import datetime
 from queue import Queue, Empty
-from typing import Tuple
 
 from ..base import Property, Base
 from ..sensor.sensor import Sensor
@@ -24,7 +23,7 @@ class Node(Base):
         doc="Label to be displayed on graph. Default is to label by class and then "
             "differentiate via alphabetical labels",
         default=None)
-    position: Tuple[float] = Property(
+    position: tuple[float, float] = Property(
         default=None,
         doc="Cartesian coordinates for node. Determined automatically by default")
     colour: str = Property(
@@ -36,7 +35,7 @@ class Node(Base):
     font_size: int = Property(
         default=None,
         doc='Font size for node labels. Default is None')
-    node_dim: tuple = Property(
+    node_dim: tuple[float, float] = Property(
         default=None,
         doc='Width and height of nodes for graph icons. '
             'Default is None, which will size to label automatically.')
@@ -130,7 +129,7 @@ class FusionNode(Node):
         default=None,
         doc="The queue from which this node draws data to be fused. Default is a standard "
             "FusionQueue")
-    tracks: set = Property(default=None,
+    tracks: set = Property(default_factory=set,
                            doc="Set of tracks tracked by the fusion node")
     colour: str = Property(
         default='#00b53d',
@@ -141,7 +140,6 @@ class FusionNode(Node):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.tracks = set()  # Set of tracks this Node has recorded
         if not self.fusion_queue:
             if self.tracker.detector:
                 self.fusion_queue = self.tracker.detector
